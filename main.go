@@ -7,8 +7,6 @@ import (
 	"image/png"
 	"os"
 	"strings"
-
-	"github.com/shizuokago/noteshrink"
 )
 
 var (
