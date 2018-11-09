@@ -1,4 +1,4 @@
-package main
+package noteshrink
 
 import (
 	"flag"
@@ -8,8 +8,7 @@ import (
 	"os"
 	"strings"
 
-	".."
-	//"github.com/shizuokago/noteshrink"
+	"github.com/shizuokago/noteshrink"
 )
 
 var (
