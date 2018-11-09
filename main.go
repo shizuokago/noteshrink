@@ -30,7 +30,7 @@ func main() {
 
 	//flagを処理
 	flag.Parse()
-	opt := noteshrink.Option{
+	opt := Option{
 		SamplingRate:  *samplingRateOpt,
 		Shift:         *shiftOpt,
 		Brightness:    *brigthnessOpt,
@@ -58,7 +58,7 @@ func main() {
 	return
 }
 
-func run(f string, opt *noteshrink.Option) error {
+func run(f string, opt *Option) error {
 
 	output := ""
 	suffix := "_min"
@@ -76,7 +76,7 @@ func run(f string, opt *noteshrink.Option) error {
 	}
 
 	//圧縮
-	shrink, err := noteshrink.Shrink(img, opt)
+	shrink, err := Shrink(img, opt)
 	if err != nil {
 		return err
 	}
