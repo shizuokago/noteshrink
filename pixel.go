@@ -2,6 +2,7 @@ package noteshrink
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"math"
 	"sort"
@@ -21,7 +22,7 @@ type Pixel struct {
 
 func NewPixel(c color.Color) *Pixel {
 
-	cc, err := convertRGBA(c)
+	cc, err := convertColor(c)
 	if err != nil {
 		return nil
 	}
@@ -92,14 +93,15 @@ func (p Pixels) Most() *Pixel {
 	}
 
 	max := 0
-	unpack := 0
+	value := 0
 	for key, elm := range counter {
+
 		if elm > max {
 			max = elm
-			unpack = key
+			value = key
 		}
 	}
-	return NewPixelRGB(UnPack(unpack))
+	return NewPixelRGB(UnPack(value))
 }
 
 func (p Pixels) Quantize(s int) (Pixels, error) {
@@ -144,6 +146,20 @@ func (p Pixels) Average() (*Pixel, error) {
 	return NewPixel(c), nil
 }
 
+func (p Pixels) ToImage(cols, rows int) image.Image {
+
+	idx := 0
+	img := image.NewRGBA(image.Rect(0, 0, cols, rows))
+
+	for col := 0; col < cols; col++ {
+		for row := 0; row < rows; row++ {
+			img.Set(col, row, p[idx].Color())
+			idx++
+		}
+	}
+	return img
+}
+
 func (p Pixels) Sort() error {
 
 	sort.Slice(p, func(i, j int) bool {
@@ -160,29 +176,16 @@ func (p Pixels) Sort() error {
 	})
 	return nil
 }
-
-func (p Pixels) Output(f string) error {
-
+func (p Pixels) debug(f string) error {
 	leng := len(p)
-	if len(p) > 20 {
+	if leng > 20 {
 		return fmt.Errorf("NotSupported.")
 	}
+	img := p.ToImage(leng, 1)
+	return OutputPNG(f, img)
+}
 
-	line := 100
-	rows := line
-	cols := leng * line
-
-	g, err := NewGrid(rows, cols)
-	if err != nil {
-		return err
-	}
-
-	for col := 0; col < cols; col++ {
-		for row := 0; row < rows; row++ {
-			idx := col / line
-			g[row][col] = p[idx]
-		}
-	}
-
-	return g.Output(f)
+func (p Pixels) output(f string, cols, rows int) error {
+	img := p.ToImage(cols, rows)
+	return OutputPNG(f, img)
 }

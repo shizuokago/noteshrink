@@ -2,16 +2,53 @@ package noteshrink
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	_ "image/jpeg"
-	_ "image/png"
+	"image/png"
+
 	"math"
+	"os"
 )
 
+func OutputPNG(f string, img image.Image) error {
+	//出力ファイルの作成
+	out, err := os.Create(f)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	var enc png.Encoder
+	enc.CompressionLevel = png.BestCompression
+	return enc.Encode(out, img)
+}
+
+//ConvertGridにより、image.ImageをGridに展開します
+func convertPixels(img image.Image) (Pixels, error) {
+
+	rect := img.Bounds()
+	cols := rect.Dx()
+	rows := rect.Dy()
+
+	rtn := make(Pixels, cols*rows)
+	idx := 0
+	for col := 0; col < cols; col++ {
+		for row := 0; row < rows; row++ {
+			color := img.At(col, row)
+			rtn[idx] = NewPixel(color)
+			idx++
+		}
+	}
+	return rtn, nil
+}
+
+//PackはRGBデータをint化します
 func Pack(p *Pixel) int {
 	return int(p.R)<<16 | int(p.G)<<8 | int(p.B)
 }
 
+//元のRGBデータに直します
 func UnPack(v int) (uint8, uint8, uint8) {
 	r := uint8((v >> 16) & 0xFF)
 	g := uint8((v >> 8) & 0xFF)
@@ -19,7 +56,8 @@ func UnPack(v int) (uint8, uint8, uint8) {
 	return r, g, b
 }
 
-func convertRGBA(c color.Color) (*color.RGBA, error) {
+//colorの変換です
+func convertColor(c color.Color) (*color.RGBA, error) {
 	switch c.(type) {
 	case color.YCbCr:
 		o := c.(color.YCbCr)

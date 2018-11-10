@@ -1,21 +1,28 @@
+/*
+ Shrink を呼び出すと image.Image をnoteshrinkして image.Imageに変換してくれます。
+
+
+*/
 package noteshrink
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"math/rand"
 	"time"
+	_ "image/jpeg"
+	_ "image/png"
 )
 
+//Option はロジックに対し
 type Option struct {
-	SamplingRate    float64
-	Brightness      float64
-	Saturation      float64
-	ForegroundNum   int
-	Shift           int
-	Iterate         int
-	SaturateFlag    bool
-	WhiteBackground bool
+	SamplingRate  float64
+	Brightness    float64
+	Saturation    float64
+	ForegroundNum int
+	Shift         int
+	Iterate       int
 }
 
 func init() {
@@ -33,18 +40,20 @@ func DefaultOption() *Option {
 	}
 }
 
+//圧縮
 func Shrink(img image.Image, op *Option) (image.Image, error) {
 
 	if op == nil {
 		op = DefaultOption()
 	}
 
-	grid, err := ConvertGrid(img)
+	data, err := convertPixels(img)
 	if err != nil {
 		return nil, err
 	}
 
-	samples, err := createSample(grid, op)
+	num := int(float64(len(data)) * op.SamplingRate)
+	samples, err := createSample(data, num)
 	if err != nil {
 		return nil, err
 	}
@@ -54,46 +63,37 @@ func Shrink(img image.Image, op *Option) (image.Image, error) {
 		return nil, err
 	}
 
-	//Foreground Debug
-	//err = palette.Output("./sample/output/notesA1_foreground.png")
-
-	shrink, err := apply(grid, bg, palette, op)
+	shrink, err := apply(data, bg, palette, op)
 	if err != nil {
 		return nil, err
 	}
+	if shrink == nil {
+		return nil, fmt.Errorf("image is nil")
+	}
 
-	return shrink.ToImage(), nil
+	rect := img.Bounds()
+	cols := rect.Dx()
+	rows := rect.Dy()
+
+	return shrink.ToImage(cols, rows), nil
 }
 
-func apply(g Grid, bg *Pixel, labels Pixels, op *Option) (Grid, error) {
+func apply(data Pixels, bg *Pixel, labels Pixels, op *Option) (Pixels, error) {
 
-	rows := g.Rows()
-	cols := g.Cols()
-
-	rtn, err := NewGrid(rows, cols)
+	flag, err := getForegraundMask(data, bg, op)
 	if err != nil {
 		return nil, err
 	}
 
-	flat := g.Flat()
-	flag, err := getForegraundMask(flat, bg, op)
-	if err != nil {
-		return nil, err
-	}
-
-	idx := 0
-	for col := 0; col < cols; col++ {
-		for row := 0; row < rows; row++ {
-			newPix := bg
-			if flag[idx] {
-				wk := closest(flat[idx], labels)
-				newPix = labels[wk]
-			}
-			rtn[row][col] = newPix
-			idx++
+	rtn := make([]*Pixel, len(data))
+	for idx := 0; idx < len(data); idx++ {
+		newPix := bg
+		if flag[idx] {
+			wk := closest(data[idx], labels)
+			newPix = labels[wk]
 		}
+		rtn[idx] = newPix
 	}
-
 	return rtn, nil
 }
 
@@ -109,14 +109,14 @@ func createPalette(p Pixels, op *Option) (*Pixel, Pixels, error) {
 		return bg, nil, err
 	}
 
-	data := make([]*Pixel, 0, len(p))
+	target := make([]*Pixel, 0, len(p))
 	for i, pix := range p {
 		if mask[i] {
-			data = append(data, pix)
+			target = append(target, pix)
 		}
 	}
 
-	labels, err := kmeans(data, op)
+	labels, err := kmeans(target, op)
 	if err != nil {
 		return bg, nil, err
 	}
@@ -125,26 +125,24 @@ func createPalette(p Pixels, op *Option) (*Pixel, Pixels, error) {
 }
 
 func getBackgroundColor(p Pixels, op *Option) (*Pixel, error) {
+
 	q, err := p.Quantize(op.Shift)
 	if err != nil {
 		return nil, err
 	}
 	col := q.Most()
+
 	return col, nil
 }
 
-func createSample(g Grid, op *Option) (Pixels, error) {
-
-	orgX := g.Rows()
-	orgY := g.Cols()
-	num := int(float64(orgX) * float64(orgY) * op.SamplingRate)
+func createSample(p Pixels, num int) (Pixels, error) {
 
 	samples := make([]*Pixel, num)
+	leng := len(p)
 	for idx := 0; idx < num; idx++ {
-		x := rand.Intn(orgX)
-		y := rand.Intn(orgY)
-		samples[idx] = g[x][y]
+		samples[idx] = NewPixel(p[rand.Intn(leng)].Color())
 	}
+
 	return samples, nil
 }
 
