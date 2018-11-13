@@ -47,22 +47,26 @@ func Shrink(img image.Image, op *Option) (image.Image, error) {
 		op = DefaultOption()
 	}
 
+	//データの展開
 	data, err := convertPixels(img)
 	if err != nil {
 		return nil, err
 	}
 
+	//サンプルの作成
 	num := int(float64(len(data)) * op.SamplingRate)
 	samples, err := createSample(data, num)
 	if err != nil {
 		return nil, err
 	}
 
+	//色の選定
 	bg, palette, err := createPalette(samples, op)
 	if err != nil {
 		return nil, err
 	}
 
+	//色の適用
 	shrink, err := apply(data, bg, palette, op)
 	if err != nil {
 		return nil, err
@@ -140,7 +144,7 @@ func createSample(p Pixels, num int) (Pixels, error) {
 	samples := make([]*Pixel, num)
 	leng := len(p)
 	for idx := 0; idx < num; idx++ {
-		samples[idx] = NewPixel(p[rand.Intn(leng)].Color())
+		samples[idx] = p[rand.Intn(leng)]
 	}
 
 	return samples, nil
@@ -175,8 +179,6 @@ func kmeans(p Pixels, op *Option) ([]*Pixel, error) {
 
 	for idx := 0; idx < itr; idx++ {
 
-		//TODO Routine
-
 		groups := make([]Pixels, len(labels))
 		for i := range labels {
 			groups[i] = make([]*Pixel, 0, len(labels))
@@ -191,11 +193,10 @@ func kmeans(p Pixels, op *Option) ([]*Pixel, error) {
 			if newLabel, err := groups[i].Average(); newLabel != nil && err == nil {
 				labels[i] = newLabel
 			} else if err != nil {
-				//TODO エラー
+				//TODO error
+				//return nil,err
 			}
 		}
-
-		//TODO routine end
 
 		changes := 0
 		for i, pix := range p {
@@ -225,4 +226,71 @@ func closest(p *Pixel, labels []*Pixel) int {
 		}
 	}
 	return idx
+}
+
+type Value interface {
+	Distance(Value) float64
+	Average([]Value) (Value,error)
+}
+
+func kmeansValue(data []Value,labels []Value,itr int) []Value {
+
+	index := make([]int, len(data))
+	for idx, datum := range data {
+		index[idx] = closestIndex(datum, labels)
+	}
+
+	rtn := make([]Value,len(labels))
+	for idx,label := range labels {
+		rtn[idx] = label
+	}
+
+	for idx := 0; idx < itr; idx++ {
+
+		groups := make([][]Value, len(rtn))
+		for i := range rtn {
+			groups[i] = make([]Value, 0, len(data))
+		}
+
+		for i, elm := range data {
+			idx := index[i]
+			groups[idx] = append(groups[idx], elm)
+		}
+
+		for i,label := range rtn {
+			valSlice := groups[i]
+			ave,err := label.Average(valSlice)
+			if ave != nil && err == nil {
+				rtn[i] = ave
+			} else if err != nil {
+			}
+		}
+
+		changes := 0
+		for i, pix := range data {
+			if newIdx := closestIndex(pix, rtn); newIdx != index[i] {
+				changes++
+				index[i] = newIdx
+			}
+		}
+
+		if changes == 0 {
+			break
+		}
+	}
+	return rtn
+}
+
+func closestIndex(val Value,labels []Value) int {
+	rtn := -1
+	min := math.MaxFloat64
+	for idx,elm := range labels {
+		vd := val.Distance(elm)
+		if vd < min {
+			min = vd
+			rtn = idx
+		}
+	}
+	return rtn
+
 }

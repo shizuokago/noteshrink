@@ -2,6 +2,7 @@ package noteshrink
 
 import (
 	"testing"
+	"math/rand"
 )
 
 func TestNewRGB(t *testing.T) {
@@ -140,4 +141,111 @@ func TestAverage(t *testing.T) {
 }
 
 func TestSort(t *testing.T) {
+}
+
+func BenchmarkNewPixel(b *testing.B) {
+	img, err := loadImage("sample/notesA1.jpg")
+	if err != nil {
+		b.Errorf("loadImage() Error[%v]", err)
+		return
+	}
+	c := img.At(1000,1000)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		NewPixel(c)
+	}
+}
+
+func BenchmarkDistanceHSV(b *testing.B) {
+	op := NewPixelRGB(100,100,100)
+	sp := NewPixelRGB(200,200,200)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		op.DistanceHSV(sp)
+	}
+}
+
+func BenchmarkDistanceRGB(b *testing.B) {
+	op := NewPixelRGB(100,100,100)
+	sp := NewPixelRGB(200,200,200)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		op.DistanceRGB(sp)
+	}
+}
+
+func BenchmarkShift(b *testing.B) {
+	p := NewPixelRGB(100, 100, 100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p.Shift(2)
+	}
+}
+
+func createPixels(n int) Pixels {
+	p := make(Pixels,100)
+	for i := 0 ; i < len(p) ; i++ {
+		p[i] = NewPixelRGB(uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)))
+	}
+	return p
+}
+//Pixels
+func BenchmarkMost100(b *testing.B) {
+	p := createPixels(100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p.Most()
+	}
+}
+func BenchmarkMost10000(b *testing.B) {
+	p := createPixels(10000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		p.Most()
+	}
+}
+
+func BenchmarkQuantize100(b *testing.B) {
+	p := createPixels(100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_,err := p.Quantize(2)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkQuantize10000(b *testing.B) {
+	p := createPixels(10000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_,err := p.Quantize(2)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkAverage100(b *testing.B) {
+	p := createPixels(100)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_,err := p.Average()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkAverage10000(b *testing.B) {
+	p := createPixels(10000)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_,err := p.Average()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
 }
