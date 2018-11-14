@@ -28,6 +28,7 @@ var (
 
 	profileVal       = flag.String("p", "", "プロファイル名（指定しない場合プロファイルを行わない）")
 	suffixVal      = flag.String("suffix", "_min", "変換ファイル名のサフィックス")
+	gifVal         = flag.Bool("g",false,"GIF化したもの")
 )
 
 func Usage() {
@@ -82,13 +83,6 @@ func main() {
 func run(f string, opt *noteshrink.Option) error {
 
 	log.Printf("Shrink    : [%s]\n",f)
-	output := ""
-	idx := strings.LastIndex(f, ".")
-	if idx == -1 {
-		output = f + *suffixVal
-	} else {
-		output = f[:idx] + *suffixVal + ".png"
-	}
 
 	//画像の読み込み
 	img, err := loadImage(f)
@@ -104,7 +98,27 @@ func run(f string, opt *noteshrink.Option) error {
 	if shrink == nil {
 		return fmt.Errorf("shrink image is null.")
 	}
-	err = noteshrink.OutputPNG(output, shrink)
+
+	output := ""
+	ext := ".png"
+	if *gifVal {
+		ext = ".gif"
+	}
+	idx := strings.LastIndex(f, ".")
+	//出力ファイル名
+	if idx == -1 {
+		output = f + * suffixVal + ext
+	} else {
+		output = f[:idx] + *suffixVal + ext
+	}
+
+	//出力の切り替え
+	if *gifVal {
+		err = noteshrink.OutputGIF(output, shrink, opt.ForegroundNum)
+	} else {
+		err = noteshrink.OutputPNG(output, shrink)
+	}
+
 	if err == nil {
 		log.Printf("Generated : [%s]\n",output)
 	}

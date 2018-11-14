@@ -6,6 +6,7 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	"image/png"
+	"image/gif"
 	"math"
 	"os"
 )
@@ -21,6 +22,64 @@ func OutputPNG(f string, img image.Image) error {
 	var enc png.Encoder
 	enc.CompressionLevel = png.BestCompression
 	return enc.Encode(out, img)
+}
+
+func OutputGIF(f string, img image.Image,num int) error {
+	//出力ファイルの作成
+	out, err := os.Create(f)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	op := &gif.Options{
+		NumColors : num,
+		Quantizer:NewGIFQuantizer(num),
+	}
+	return gif.Encode(out, img,op)
+}
+
+type GIFQuantizer struct {
+	palette color.Palette
+	num int
+}
+
+func NewGIFQuantizer(num int) *GIFQuantizer {
+	quantizer := GIFQuantizer{}
+	quantizer.num = num
+	return &quantizer
+}
+
+func (q GIFQuantizer) Quantize(p color.Palette, m image.Image) (color.Palette) {
+
+	palette := make(color.Palette,0,q.num)
+	rect := m.Bounds()
+
+	cols := rect.Dx()
+	rows := rect.Dy()
+
+	flag := make(map[int]int)
+
+	for col := 0 ; col < cols; col++ {
+		for row := 0 ; row < rows; row++ {
+
+			c := m.At(col,row)
+			pack := Pack(NewPixel(c))
+
+			if _,ok := flag[pack]; !ok {
+				palette = append(palette,c)
+				if len(palette) == q.num {
+					break
+				}
+				flag[pack] = pack
+			}
+		}
+		if len(palette) == q.num {
+			break
+		}
+	}
+
+	return palette
 }
 
 //ConvertGridにより、image.ImageをGridに展開します
