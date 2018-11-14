@@ -8,20 +8,26 @@ import (
 	_ "image/png"
 	"os"
 	"strings"
+	"log"
 
 	"github.com/shizuokago/noteshrink"
-	"log"
+
+	"runtime/pprof"
+	"sync"
 )
 
 var (
-	samplingRateOpt = flag.Float64("r", 0.02, "背景色、前景色を選定する際のサンプル数の割合。")
+	samplingRateOpt = flag.Float64("r", 0.002, "背景色、前景色を選定する際のサンプル数の割合。")
 	shiftOpt        = flag.Int("shift", 2, "画素圧縮時のシフト数")
 
-	brightnessOpt = flag.Float64("b", 0.3, "前景色選定時のVの距離")
-	saturationOpt = flag.Float64("s", 0.2, "前景色選定時のSの距離")
+	brightnessOpt = flag.Float64("b", 0.35, "前景色選定時のVの距離")
+	saturationOpt = flag.Float64("s", 0.25, "前景色選定時のSの距離")
 
 	foregroundNumOpt = flag.Int("f", 6, "前景色に選ばれる数を指定")
-	iterateOpt       = flag.Int("i", 40, "kmeans が探索するループ数")
+	iterateOpt       = flag.Int("i", 40, "kmeans のループ数")
+
+	profileVal       = flag.String("p", "", "プロファイル名（指定しない場合プロファイルを行わない）")
+	suffixVal      = flag.String("suffix", "_min", "変換ファイル名のサフィックス")
 )
 
 func Usage() {
@@ -34,6 +40,12 @@ func main() {
 
 	//flagを処理
 	flag.Parse()
+	//プロファイリングを行う
+	if *profileVal != "" {
+		defer startProfile(*profileVal).stop()
+	}
+
+	//オプションをflagから設定
 	opt := noteshrink.Option{
 		SamplingRate:  *samplingRateOpt,
 		Shift:         *shiftOpt,
@@ -43,24 +55,27 @@ func main() {
 		Iterate:       *iterateOpt,
 	}
 
+	//ファイル名を処理する
 	files := flag.Args()
-
 	if files == nil || len(files) == 0 {
 		Usage()
 		return
 	}
 
+	//各処理を非同期で行う
+	wg := sync.WaitGroup{}
 	for _, f := range files {
-
-		err := run(f, &opt)
-
-		if err != nil {
-			fmt.Printf("[%v]\n", err)
-			os.Exit(1)
-		}
+		wg.Add(1)
+		go func(file string) {
+			err := run(file, &opt)
+			if err != nil {
+				fmt.Printf("[%v]\n", err)
+			}
+			wg.Done()
+		}(f)
 	}
+	wg.Wait()
 
-	os.Exit(0)
 	return
 }
 
@@ -68,12 +83,11 @@ func run(f string, opt *noteshrink.Option) error {
 
 	log.Printf("Shrink    : [%s]\n",f)
 	output := ""
-	suffix := "_min"
 	idx := strings.LastIndex(f, ".")
 	if idx == -1 {
-		output = f + suffix
+		output = f + *suffixVal
 	} else {
-		output = f[:idx] + suffix + ".png"
+		output = f[:idx] + *suffixVal + ".png"
 	}
 
 	//画像の読み込み
@@ -94,6 +108,7 @@ func run(f string, opt *noteshrink.Option) error {
 	if err == nil {
 		log.Printf("Generated : [%s]\n",output)
 	}
+
 	return err
 }
 
@@ -110,4 +125,37 @@ func loadImage(f string) (image.Image, error) {
 	}
 
 	return img, nil
+}
+
+
+type profile struct {
+	file *os.File
+	err error
+}
+func startProfile(f string) *profile {
+	log.Println("Profile Start:" + f)
+	rtn := profile{}
+	file, err := os.Create(f)
+	if err != nil {
+		rtn.err = err
+	} else {
+		err = pprof.StartCPUProfile(file)
+		if err == nil {
+			rtn.file = file
+		} else {
+			rtn.err = err
+			defer file.Close()
+		}
+	}
+	return &rtn
+}
+
+func (p profile) stop() {
+	log.Println("Profile Stop")
+	if p.err == nil {
+		pprof.StopCPUProfile()
+		p.file.Close()
+	} else {
+		log.Println(p.err)
+	}
 }

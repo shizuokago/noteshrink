@@ -9,7 +9,6 @@ import (
 )
 
 type Pixel struct {
-	value int
 
 	R uint8
 	G uint8
@@ -21,7 +20,6 @@ type Pixel struct {
 }
 
 func NewPixel(c color.Color) *Pixel {
-
 	cc, err := convertColor(c)
 	if err != nil {
 		return nil
@@ -35,7 +33,6 @@ func NewPixelRGB(r, g, b uint8) *Pixel {
 	p.G = g
 	p.B = b
 	p.H, p.S, p.V = RGB2HSV(p.R, p.G, p.B)
-	p.value = Pack(p)
 	return p
 }
 
@@ -57,11 +54,13 @@ func (p Pixel) DistanceHSV(src *Pixel) (float64, float64, float64) {
 
 func (own Pixel) DistanceRGB(src *Pixel) float64 {
 	all := 0.0
-	all += math.Pow(float64(src.R)-float64(own.R), 2)
-	all += math.Pow(float64(src.G)-float64(own.G), 2)
-	all += math.Pow(float64(src.B)-float64(own.B), 2)
+	r := float64(src.R) - float64(own.R)
+	g := float64(src.G) - float64(own.G)
+	b := float64(src.B) - float64(own.B)
+	all += r * r
+	all += g * g
+	all += b * b
 	return all
-	//return float64(own.value - src.value)
 }
 
 func (p Pixel) Shift(shift uint) *Pixel {
@@ -88,7 +87,7 @@ func (p Pixels) Most() *Pixel {
 
 	counter := make(map[int]int)
 	for _, pix := range p {
-		val := pix.value
+		val := Pack(pix)
 		counter[val]++
 	}
 
@@ -163,8 +162,8 @@ func (p Pixels) ToImage(cols, rows int) image.Image {
 func (p Pixels) Sort() error {
 
 	sort.Slice(p, func(i, j int) bool {
-		pi := p[i].value
-		pj := p[j].value
+		pi := Pack(p[i])
+		pj := Pack(p[j])
 
 		iRGB := int((pi>>16)&0xFF) +
 			int((pi>>8)&0xFF) +

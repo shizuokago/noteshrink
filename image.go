@@ -6,7 +6,6 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	"image/png"
-
 	"math"
 	"os"
 )
@@ -33,13 +32,15 @@ func convertPixels(img image.Image) (Pixels, error) {
 
 	rtn := make(Pixels, cols*rows)
 	idx := 0
+
 	for col := 0; col < cols; col++ {
 		for row := 0; row < rows; row++ {
-			color := img.At(col, row)
+			color :=img.At(col,row)
 			rtn[idx] = NewPixel(color)
 			idx++
 		}
 	}
+
 	return rtn, nil
 }
 
@@ -58,6 +59,7 @@ func UnPack(v int) (uint8, uint8, uint8) {
 
 //colorの変換です
 func convertColor(c color.Color) (*color.RGBA, error) {
+
 	switch c.(type) {
 	case color.YCbCr:
 		o := c.(color.YCbCr)
@@ -71,7 +73,6 @@ func convertColor(c color.Color) (*color.RGBA, error) {
 		return newColor, nil
 	default:
 	}
-
 	return nil, fmt.Errorf("not support color[%v]", c)
 }
 

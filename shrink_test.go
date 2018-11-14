@@ -6,7 +6,21 @@ import (
 	_ "image/png"
 	"os"
 	"testing"
+
 )
+
+func TestMain(m *testing.M) {
+	setup()
+	ret := m.Run()
+	teardown()
+	os.Exit(ret)
+}
+
+func setup() {
+}
+
+func teardown() {
+}
 
 func TestBackground(t *testing.T) {
 
@@ -29,12 +43,13 @@ func TestBackground(t *testing.T) {
 
 	samples.output("sample/notesA1_samples.png",100,100)
 
+	op.Shift = 4
 	bg, err := getBackgroundColor(samples, op)
 	if err != nil {
 		t.Errorf("BackgroundTest:[%v]", err)
 	}
 
-	if bg.R != 236 || bg.G != 236 || bg.B != 236 {
+	if bg.R != 224 || bg.G != 224 || bg.B != 224 {
 		t.Errorf("Background Error:[%v]", bg)
 	}
 
@@ -75,6 +90,7 @@ func BenchmarkShrink(b *testing.B) {
 		return
 	}
 	op := DefaultOption()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		shrink, err := Shrink(img, op)
 		if err != nil {
@@ -85,6 +101,179 @@ func BenchmarkShrink(b *testing.B) {
 			b.Errorf("shrink image is nil.")
 			return
 		}
+	}
+}
+
+func BenchmarkConvertPixels(b *testing.B) {
+
+	img, err := loadImage("sample/notesA1.jpg")
+	if err != nil {
+		b.Errorf("loadImage() Error[%v]", err)
+		return
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		//データの展開
+		_, err := convertPixels(img)
+		if err != nil {
+			b.Errorf("convertPixel() Error[%v]", err)
+		}
+	}
+}
+
+func BenchmarkCreateSample(b *testing.B) {
+
+	img, err := loadImage("sample/notesA1.jpg")
+	if err != nil {
+		b.Errorf("loadImage() Error[%v]", err)
+		return
+	}
+	data, err := convertPixels(img)
+	if err != nil {
+		b.Errorf("convertPixels() Error[%v]", err)
+	}
+
+	op := DefaultOption()
+	//サンプルの作成
+	num := int(float64(len(data)) * op.SamplingRate)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := createSample(data, num)
+		if err != nil {
+			b.Errorf("createSample() Error[%v]", err)
+			return
+		}
+	}
+}
+
+func BenchmarkCreatePalette(b *testing.B) {
+
+	img, err := loadImage("sample/notesA1.jpg")
+	if err != nil {
+		b.Errorf("loadImage() Error[%v]", err)
+		return
+	}
+	op := DefaultOption()
+
+	//データの展開
+	data, err := convertPixels(img)
+	if err != nil {
+		b.Errorf("convertPixels() Error[%v]", err)
+		return
+	}
+
+	//サンプルの作成
+	num := int(float64(len(data)) * op.SamplingRate)
+	samples, err := createSample(data, num)
+	if err != nil {
+		b.Errorf("createSample() Error[%v]", err)
+		return
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		//色の選定
+		_, _, err := createPalette(samples, op)
+		if err != nil {
+			b.Errorf("createPalette() Error[%v]", err)
+			return
+		}
+	}
+}
+
+func BenchmarkApply(b *testing.B) {
+
+	img, err := loadImage("sample/notesA1.jpg")
+	if err != nil {
+		b.Errorf("loadImage() Error[%v]", err)
+		return
+	}
+	op := DefaultOption()
+
+	//データの展開
+	data, err := convertPixels(img)
+	if err != nil {
+		b.Errorf("convertPixels() Error[%v]", err)
+	}
+
+	//サンプルの作成
+	num := int(float64(len(data)) * op.SamplingRate)
+	samples, err := createSample(data, num)
+	if err != nil {
+		b.Errorf("createSample() Error[%v]", err)
+		return
+	}
+
+	//色の選定
+	bg, palette, err := createPalette(samples, op)
+	if err != nil {
+		b.Errorf("createPalette() Error[%v]", err)
+		return
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		//色の適用
+		shrink, err := apply(data, bg, palette, op)
+		if err != nil {
+			b.Errorf("apply() Error[%v]", err)
+			return
+		}
+		if shrink == nil {
+			b.Errorf("apply image is nil")
+			return
+		}
+	}
+}
+
+func BenchmarkToImage(b *testing.B) {
+	img, err := loadImage("sample/notesA1.jpg")
+	if err != nil {
+		b.Errorf("loadImage() Error[%v]", err)
+		return
+	}
+	op := DefaultOption()
+
+	//データの展開
+	data, err := convertPixels(img)
+	if err != nil {
+		b.Errorf("convertPixels() Error[%v]", err)
+	}
+
+	//サンプルの作成
+	num := int(float64(len(data)) * op.SamplingRate)
+	samples, err := createSample(data, num)
+	if err != nil {
+		b.Errorf("createSample() Error[%v]", err)
+		return
+	}
+
+	//色の選定
+	bg, palette, err := createPalette(samples, op)
+	if err != nil {
+		b.Errorf("createPalett	e() Error[%v]", err)
+		return
+	}
+
+	//色の適用
+	shrink, err := apply(data, bg, palette, op)
+	if err != nil {
+		b.Errorf("apply() Error[%v]", err)
+		return
+	}
+	if shrink == nil {
+		b.Errorf("image is nil")
+		return
+	}
+
+	rect := img.Bounds()
+	cols := rect.Dx()
+	rows := rect.Dy()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		shrink.ToImage(cols, rows)
 	}
 }
 
