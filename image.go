@@ -24,7 +24,22 @@ func OutputPNG(f string, img image.Image) error {
 	return enc.Encode(out, img)
 }
 
+var gifPalette color.Palette = nil
+
+func setGIFPalette(bg *Pixel,fore Pixels) {
+	gifPalette = make(color.Palette,len(fore) + 1)
+	gifPalette[0] = bg.Color()
+	for i,pix := range fore {
+		gifPalette[i + 1] = pix.Color()
+	}
+}
+
 func OutputGIF(f string, img image.Image,num int) error {
+
+	if gifPalette == nil {
+		return fmt.Errorf("palette is nil")
+	}
+
 	//出力ファイルの作成
 	out, err := os.Create(f)
 	if err != nil {
@@ -33,53 +48,24 @@ func OutputGIF(f string, img image.Image,num int) error {
 	defer out.Close()
 
 	op := &gif.Options{
-		NumColors : num,
-		Quantizer:NewGIFQuantizer(num),
+		NumColors : len(gifPalette),
+		Quantizer:NewQuantizer(gifPalette),
 	}
 	return gif.Encode(out, img,op)
 }
 
-type GIFQuantizer struct {
+type gifQuantizer struct {
 	palette color.Palette
-	num int
 }
 
-func NewGIFQuantizer(num int) *GIFQuantizer {
-	quantizer := GIFQuantizer{}
-	quantizer.num = num
-	return &quantizer
+func NewQuantizer(p color.Palette) *gifQuantizer {
+	q := gifQuantizer{}
+	q.palette = p
+	return &q
 }
 
-func (q GIFQuantizer) Quantize(p color.Palette, m image.Image) (color.Palette) {
-
-	palette := make(color.Palette,0,q.num)
-	rect := m.Bounds()
-
-	cols := rect.Dx()
-	rows := rect.Dy()
-
-	flag := make(map[int]int)
-
-	for col := 0 ; col < cols; col++ {
-		for row := 0 ; row < rows; row++ {
-
-			c := m.At(col,row)
-			pack := Pack(NewPixel(c))
-
-			if _,ok := flag[pack]; !ok {
-				palette = append(palette,c)
-				if len(palette) == q.num {
-					break
-				}
-				flag[pack] = pack
-			}
-		}
-		if len(palette) == q.num {
-			break
-		}
-	}
-
-	return palette
+func (q gifQuantizer) Quantize(p color.Palette,img image.Image) (color.Palette) {
+	return q.palette
 }
 
 //ConvertGridにより、image.ImageをGridに展開します
@@ -145,63 +131,59 @@ func RGB2HSV(or, og, ob uint8) (float64, float64, float64) {
 	max := math.Max(math.Max(r, g), b)
 	min := math.Min(math.Min(r, g), b)
 
-	h := max - min
-	if h > 0 {
-		if max == r {
-			h = (g - b) / h
-			if h < 0 {
-				h += 6
-			}
-		} else if max == g {
-			h = 2 + (b-r)/h
-		} else {
-			h = 4 + (r-g)/h
-		}
+	d := max - min
+    h := 0.0
+    switch {
+	case d == 0: h = 0
+	case max == r: h = math.Mod((g - b) / d,6)
+	case max == g: h = (b - r) / d + 2
+	case max == b: h = (r - g) / d + 4
 	}
-	h /= 6
-	s := max - min
-	if max > 0 {
-		s /= max
+	h = h / 6
+	if h < 0 {
+		h += 1.0
 	}
+
+	s := 0.0
+	if max != 0 {
+		s = d / max
+	}
+
 	v := max
+
 	return h, s, v
 }
 
 //https://www.rapidtables.com/convert/color/hsv-to-rgb.html
 func HSV2RGB(h, s, v float64) *color.RGBA {
 
-	r := v
-	g := v
-	b := v
-
-	if s > 0 {
-
-		h *= 6.
-		i := int(h)
-		f := h - float64(i)
-
-		switch i {
-		default:
-		case 0:
-			g *= 1 - s*(1-f)
-			b *= 1 - s
-		case 1:
-			r *= 1 - s*f
-			b *= 1 - s
-		case 2:
-			r *= 1 - s
-			b *= 1 - s*(1-f)
-		case 3:
-			r *= 1 - s
-			g *= 1 - s*f
-		case 4:
-			r *= 1 - s*(1-f)
-			g *= 1 - s
-		case 5:
-			g *= 1 - s
-			b *= 1 - s*f
-		}
+	hd := h * 360.0
+	if hd >= 360 {
+		hd = 359
 	}
+
+	hh := hd / 60
+
+	c := v * s
+	x := c * (1.0 - math.Abs(math.Mod(hh,2) - 1.0))
+
+	r := 0.0
+	g := 0.0
+	b := 0.0
+
+	switch {
+	case hh < 1: r,g,b = c,x,0
+	case hh < 2: r,g,b = x,c,0
+	case hh < 3: r,g,b = 0,c,x
+	case hh < 4: r,g,b = 0,x,c
+	case hh < 5: r,g,b = x,0,c
+	default : r,g,b = c,0,x
+	}
+
+	m := v - c
+	r += m
+	g += m
+	b += m
 
 	return FloatRGBA(r*255.0, g*255.0, b*255.0)
 }

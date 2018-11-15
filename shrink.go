@@ -75,6 +75,9 @@ func Shrink(img image.Image, op *Option) (image.Image, error) {
 		return nil, fmt.Errorf("image is nil")
 	}
 
+	//GIF用にパレットを作成
+	setGIFPalette(bg,palette)
+
 	rect := img.Bounds()
 	cols := rect.Dx()
 	rows := rect.Dy()

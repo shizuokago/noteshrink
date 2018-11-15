@@ -25,7 +25,178 @@ func TestPack(t *testing.T) {
 	}
 }
 
-func TestColorConvert(t *testing.T) {
+
+func TestRGB2HSV(t *testing.T) {
+	//Black
+	h,s,v := RGB2HSV(0, 0, 0)
+	if !same(h,0) || !same(s,0) || !same(v,0) {
+		t.Errorf("Error:RGB2HSV Black value[%f][%f][%f]", h,s,v)
+	}
+
+	//White
+	h,s,v = RGB2HSV(255, 255, 255)
+	if !same(h,0) || !same(s,0) || !same(v,1.0) {
+		t.Errorf("Error:RGB2HSV White value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Red
+	h,s,v = RGB2HSV(255, 0, 0)
+	if !same(h,0) || !same(s,1.0) || !same(v,1.0) {
+		t.Errorf("Error:RGB2HSV Red value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Lime
+	h,s,v = RGB2HSV(0, 255, 0)
+	if !same(h,0.333333) || !same(s,1.0) || !same(v,1.0) {
+		t.Errorf("Error:RGB2HSV Lime value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Blue
+	h,s,v = RGB2HSV(0, 0, 255)
+	if !same(h,0.66667) || !same(s,1.0) || !same(v,1.0) {
+		t.Errorf("Error:RGB2HSV Blue value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Yellow
+	h,s,v = RGB2HSV(255, 255, 0)
+	if !same(h,60.0 / 360.0) || !same(s,1.0) || !same(v,1.0) {
+		t.Errorf("Error:RGB2HSV Yellow value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Cyan
+	h,s,v = RGB2HSV(0, 255, 255)
+	if !same(h,0.5) || !same(s,1.0) || !same(v,1.0) {
+		t.Errorf("Error:RGB2HSV Cyan value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Magenta
+	h,s,v = RGB2HSV(255, 0, 255)
+	if !same(h,0.83333) || !same(s,1.0) || !same(v,1.0) {
+		t.Errorf("Error:RGB2HSV Magenta value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Silver
+	h,s,v = RGB2HSV(192, 192, 192)
+	//0.75???
+	if !same(h,0.0) || !same(s,0.0) || !same(v,0.752941) {
+		t.Errorf("Error:RGB2HSV Sliver value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Gray
+	h,s,v = RGB2HSV(128, 128, 128)
+	if !same(h,0) || !same(s,0) || !same(v,0.501961) {
+		t.Errorf("Error:RGB2HSV Gray value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Maroon
+	h,s,v = RGB2HSV(128, 0, 0)
+	if !same(h,0) || !same(s,1.0) || !same(v,0.501961) {
+		t.Errorf("Error:RGB2HSV Maroon value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Olive
+	h,s,v = RGB2HSV(128, 128, 0)
+	if !same(h,60.0/360.0) || !same(s,1.0) || !same(v,0.501961) {
+		t.Errorf("Error:RGB2HSV Olive value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Green
+	h,s,v = RGB2HSV(0, 128, 0)
+	if !same(h,120.0/360.0) || !same(s,1.0) || !same(v,0.501961) {
+		t.Errorf("Error:RGB2HSV Green value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Purple
+	h,s,v = RGB2HSV(128, 0, 128)
+	if !same(h,300.0/360.0) || !same(s,1.0) || !same(v,0.501961) {
+		t.Errorf("Error:RGB2HSV Purple value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Teal
+	h,s,v = RGB2HSV(0, 128, 128)
+	if !same(h,0.5) || !same(s,1.0) || !same(v,0.501961) {
+		t.Errorf("Error:RGB2HSV Teal value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+	//Navy
+	h,s,v = RGB2HSV(0, 0, 128)
+	if !same(h,240.0/360.0) || !same(s,1.0) || !same(v,0.501961) {
+		t.Errorf("Error:RGB2HSV Navy value.H=[%v],S[%f],V[%f]", h,s,v)
+	}
+}
+
+func TestHSV2RGB(t *testing.T) {
+	//Black
+	color := HSV2RGB(0, 0, 0)
+	if color.R != 0 || color.G != 0 || color.B != 0 {
+		t.Errorf("Error:HSV2RGB Black value[%v]", color)
+	}
+
+    //White
+	color = HSV2RGB(0.0, 0.0, 1.0)
+	if color.R != 255 || color.G != 255 || color.B != 255 {
+		t.Errorf("Error:HSV2RGB White value[%v]", color)
+	}
+	//Red
+	color = HSV2RGB(0, 1.0, 1.0)
+	if color.R != 255 || color.G != 0 || color.B != 0 {
+		t.Errorf("Error:HSV2RGB Red value[%v]", color)
+	}
+	//Lime
+	color = HSV2RGB(0.33333, 1.0, 1.0)
+	if color.R != 0 || color.G != 255 || color.B != 0 {
+		t.Errorf("Error:HSV2RGB Lime value[%v]", color)
+	}
+	//Blue
+	color = HSV2RGB(0.66667, 1.0, 1.0)
+	if color.R != 0 || color.G != 0 || color.B != 255 {
+		t.Errorf("Error:HSV2RGB Blue value[%v]", color)
+	}
+	//Yellow
+	color = HSV2RGB(0.16667, 1.0, 1.0)
+	if color.R != 255 || color.G != 255 || color.B != 0 {
+		t.Errorf("Error:HSV2RGB Yellow value[%v]", color)
+	}
+	//Cyan
+	color = HSV2RGB(0.5, 1.0, 1.0)
+	if color.R != 0 || color.G != 255 || color.B != 255 {
+		t.Errorf("Error:HSV2RGB Cyan value[%v]", color)
+	}
+	//Magenta
+	color = HSV2RGB(0.83333, 1.0, 1.0)
+	if color.R != 255 || color.G != 0 || color.B != 255 {
+		t.Errorf("Error:HSV2RGB Magenta value[%v]", color)
+	}
+	//Silver
+	color = HSV2RGB(0, 0, 0.75)
+	//Not 192???
+	if color.R != 191 || color.G != 191 || color.B != 191 {
+		t.Errorf("Error:HSV2RGB Sliver value[%v]", color)
+	}
+	//Gray
+	color = HSV2RGB(0, 0, 0.5)
+	if color.R != 128 || color.G != 128 || color.B != 128 {
+		t.Errorf("Error:HSV2RGB Gray value[%v]", color)
+	}
+	//Maroon
+	color = HSV2RGB(0, 1.0, 0.5)
+	if color.R != 128 || color.G != 0 || color.B != 0 {
+		t.Errorf("Error:HSV2RGB Maroon value[%v]", color)
+	}
+	//Olive
+	color = HSV2RGB(60.0/360.0, 1.0, 0.5)
+	if color.R != 128 || color.G != 128 || color.B != 0 {
+		t.Errorf("Error:HSV2RGB Olive value[%v]", color)
+	}
+	//Green
+	color = HSV2RGB(120.0/360.0, 1.0, 0.5)
+	if color.R != 0 || color.G != 128 || color.B != 0 {
+		t.Errorf("Error:HSV2RGB Green value[%v]", color)
+	}
+	//Purple
+	color = HSV2RGB(300.0/360.0, 1.0, 0.5)
+	if color.R != 128 || color.G != 0 || color.B != 128 {
+		t.Errorf("Error:HSV2RGB Purple value[%v]", color)
+	}
+	//Teal
+	color = HSV2RGB(0.5, 1.0, 0.5)
+	if color.R != 0 || color.G != 128 || color.B != 128 {
+		t.Errorf("Error:HSV2RGB Teal value[%v]", color)
+	}
+	//Navy
+	color = HSV2RGB(240.0/360.0, 1.0, 0.5)
+	if color.R != 0 || color.G != 0 || color.B != 128 {
+		t.Errorf("Error:HSV2RGB Navy value[%v]", color)
+	}
+}
+
+func TestConvert(t *testing.T) {
 
 	t.Logf("RGB=[%d,%d,%d]", 1, 2, 255)
 	h, s, v := RGB2HSV(1, 2, 255)
