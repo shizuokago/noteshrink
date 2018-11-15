@@ -6,9 +6,9 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"log"
 	"os"
 	"strings"
-	"log"
 
 	"github.com/shizuokago/noteshrink"
 
@@ -26,9 +26,9 @@ var (
 	foregroundNumOpt = flag.Int("f", 6, "前景色に選ばれる数を指定")
 	iterateOpt       = flag.Int("i", 40, "kmeans のループ数")
 
-	profileVal       = flag.String("p", "", "プロファイル名（指定しない場合プロファイルを行わない）")
-	suffixVal      = flag.String("suffix", "_min", "変換ファイル名のサフィックス")
-	gifVal         = flag.Bool("g",false,"GIF化したもの")
+	profileVal = flag.String("p", "", "プロファイル名（指定しない場合プロファイルを行わない）")
+	suffixVal  = flag.String("suffix", "_min", "変換ファイル名のサフィックス")
+	gifVal     = flag.Bool("g", false, "GIF化したもの")
 )
 
 func Usage() {
@@ -82,7 +82,7 @@ func main() {
 
 func run(f string, opt *noteshrink.Option) error {
 
-	log.Printf("Shrink    : [%s]\n",f)
+	log.Printf("Shrink    : [%s]\n", f)
 
 	//画像の読み込み
 	img, err := loadImage(f)
@@ -107,7 +107,7 @@ func run(f string, opt *noteshrink.Option) error {
 	idx := strings.LastIndex(f, ".")
 	//出力ファイル名
 	if idx == -1 {
-		output = f + * suffixVal + ext
+		output = f + *suffixVal + ext
 	} else {
 		output = f[:idx] + *suffixVal + ext
 	}
@@ -120,7 +120,7 @@ func run(f string, opt *noteshrink.Option) error {
 	}
 
 	if err == nil {
-		log.Printf("Generated : [%s]\n",output)
+		log.Printf("Generated : [%s]\n", output)
 	}
 
 	return err
@@ -141,11 +141,11 @@ func loadImage(f string) (image.Image, error) {
 	return img, nil
 }
 
-
 type profile struct {
 	file *os.File
-	err error
+	err  error
 }
+
 func startProfile(f string) *profile {
 	log.Println("Profile Start:" + f)
 	rtn := profile{}

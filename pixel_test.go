@@ -1,8 +1,8 @@
 package noteshrink
 
 import (
-	"testing"
 	"math/rand"
+	"testing"
 )
 
 func TestNewRGB(t *testing.T) {
@@ -149,7 +149,7 @@ func BenchmarkNewPixel(b *testing.B) {
 		b.Errorf("loadImage() Error[%v]", err)
 		return
 	}
-	c := img.At(1000,1000)
+	c := img.At(1000, 1000)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -158,8 +158,8 @@ func BenchmarkNewPixel(b *testing.B) {
 }
 
 func BenchmarkDistanceHSV(b *testing.B) {
-	op := NewPixelRGB(100,100,100)
-	sp := NewPixelRGB(200,200,200)
+	op := NewPixelRGB(100, 100, 100)
+	sp := NewPixelRGB(200, 200, 200)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		op.DistanceHSV(sp)
@@ -167,8 +167,8 @@ func BenchmarkDistanceHSV(b *testing.B) {
 }
 
 func BenchmarkDistanceRGB(b *testing.B) {
-	op := NewPixelRGB(100,100,100)
-	sp := NewPixelRGB(200,200,200)
+	op := NewPixelRGB(100, 100, 100)
+	sp := NewPixelRGB(200, 200, 200)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		op.DistanceRGB(sp)
@@ -184,12 +184,13 @@ func BenchmarkShift(b *testing.B) {
 }
 
 func createPixels(n int) Pixels {
-	p := make(Pixels,100)
-	for i := 0 ; i < len(p) ; i++ {
-		p[i] = NewPixelRGB(uint8(rand.Intn(255)),uint8(rand.Intn(255)),uint8(rand.Intn(255)))
+	p := make(Pixels, 100)
+	for i := 0; i < len(p); i++ {
+		p[i] = NewPixelRGB(uint8(rand.Intn(255)), uint8(rand.Intn(255)), uint8(rand.Intn(255)))
 	}
 	return p
 }
+
 //Pixels
 func BenchmarkMost100(b *testing.B) {
 	p := createPixels(100)
@@ -210,7 +211,7 @@ func BenchmarkQuantize100(b *testing.B) {
 	p := createPixels(100)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_,err := p.Quantize(2)
+		_, err := p.Quantize(2)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -221,7 +222,7 @@ func BenchmarkQuantize10000(b *testing.B) {
 	p := createPixels(10000)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_,err := p.Quantize(2)
+		_, err := p.Quantize(2)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -232,7 +233,7 @@ func BenchmarkAverage100(b *testing.B) {
 	p := createPixels(100)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_,err := p.Average()
+		_, err := p.Average()
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -243,7 +244,7 @@ func BenchmarkAverage10000(b *testing.B) {
 	p := createPixels(10000)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_,err := p.Average()
+		_, err := p.Average()
 		if err != nil {
 			b.Fatal(err)
 		}

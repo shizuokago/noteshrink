@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/gif"
 	_ "image/jpeg"
 	"image/png"
-	"image/gif"
 	"math"
 	"os"
 )
@@ -26,15 +26,15 @@ func OutputPNG(f string, img image.Image) error {
 
 var gifPalette color.Palette = nil
 
-func setGIFPalette(bg *Pixel,fore Pixels) {
-	gifPalette = make(color.Palette,len(fore) + 1)
+func setGIFPalette(bg *Pixel, fore Pixels) {
+	gifPalette = make(color.Palette, len(fore)+1)
 	gifPalette[0] = bg.Color()
-	for i,pix := range fore {
-		gifPalette[i + 1] = pix.Color()
+	for i, pix := range fore {
+		gifPalette[i+1] = pix.Color()
 	}
 }
 
-func OutputGIF(f string, img image.Image,num int) error {
+func OutputGIF(f string, img image.Image, num int) error {
 
 	if gifPalette == nil {
 		return fmt.Errorf("palette is nil")
@@ -48,10 +48,10 @@ func OutputGIF(f string, img image.Image,num int) error {
 	defer out.Close()
 
 	op := &gif.Options{
-		NumColors : len(gifPalette),
-		Quantizer:NewQuantizer(gifPalette),
+		NumColors: len(gifPalette),
+		Quantizer: NewQuantizer(gifPalette),
 	}
-	return gif.Encode(out, img,op)
+	return gif.Encode(out, img, op)
 }
 
 type gifQuantizer struct {
@@ -64,7 +64,7 @@ func NewQuantizer(p color.Palette) *gifQuantizer {
 	return &q
 }
 
-func (q gifQuantizer) Quantize(p color.Palette,img image.Image) (color.Palette) {
+func (q gifQuantizer) Quantize(p color.Palette, img image.Image) color.Palette {
 	return q.palette
 }
 
@@ -80,7 +80,7 @@ func convertPixels(img image.Image) (Pixels, error) {
 
 	for col := 0; col < cols; col++ {
 		for row := 0; row < rows; row++ {
-			color :=img.At(col,row)
+			color := img.At(col, row)
 			rtn[idx] = NewPixel(color)
 			idx++
 		}
@@ -132,12 +132,16 @@ func RGB2HSV(or, og, ob uint8) (float64, float64, float64) {
 	min := math.Min(math.Min(r, g), b)
 
 	d := max - min
-    h := 0.0
-    switch {
-	case d == 0: h = 0
-	case max == r: h = math.Mod((g - b) / d,6)
-	case max == g: h = (b - r) / d + 2
-	case max == b: h = (r - g) / d + 4
+	h := 0.0
+	switch {
+	case d == 0:
+		h = 0
+	case max == r:
+		h = math.Mod((g-b)/d, 6)
+	case max == g:
+		h = (b-r)/d + 2
+	case max == b:
+		h = (r-g)/d + 4
 	}
 	h = h / 6
 	if h < 0 {
@@ -165,19 +169,25 @@ func HSV2RGB(h, s, v float64) *color.RGBA {
 	hh := hd / 60
 
 	c := v * s
-	x := c * (1.0 - math.Abs(math.Mod(hh,2) - 1.0))
+	x := c * (1.0 - math.Abs(math.Mod(hh, 2)-1.0))
 
 	r := 0.0
 	g := 0.0
 	b := 0.0
 
 	switch {
-	case hh < 1: r,g,b = c,x,0
-	case hh < 2: r,g,b = x,c,0
-	case hh < 3: r,g,b = 0,c,x
-	case hh < 4: r,g,b = 0,x,c
-	case hh < 5: r,g,b = x,0,c
-	default : r,g,b = c,0,x
+	case hh < 1:
+		r, g, b = c, x, 0
+	case hh < 2:
+		r, g, b = x, c, 0
+	case hh < 3:
+		r, g, b = 0, c, x
+	case hh < 4:
+		r, g, b = 0, x, c
+	case hh < 5:
+		r, g, b = x, 0, c
+	default:
+		r, g, b = c, 0, x
 	}
 
 	m := v - c

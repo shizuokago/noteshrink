@@ -8,11 +8,11 @@ package noteshrink
 import (
 	"fmt"
 	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"math"
 	"math/rand"
 	"time"
-	_ "image/jpeg"
-	_ "image/png"
 )
 
 //Option はロジックに対し
@@ -76,7 +76,7 @@ func Shrink(img image.Image, op *Option) (image.Image, error) {
 	}
 
 	//GIF用にパレットを作成
-	setGIFPalette(bg,palette)
+	setGIFPalette(bg, palette)
 
 	rect := img.Bounds()
 	cols := rect.Dx()
@@ -233,18 +233,18 @@ func closest(p *Pixel, labels []*Pixel) int {
 
 type Value interface {
 	Distance(Value) float64
-	Average([]Value) (Value,error)
+	Average([]Value) (Value, error)
 }
 
-func kmeansValue(data []Value,labels []Value,itr int) []Value {
+func kmeansValue(data []Value, labels []Value, itr int) []Value {
 
 	index := make([]int, len(data))
 	for idx, datum := range data {
 		index[idx] = closestIndex(datum, labels)
 	}
 
-	rtn := make([]Value,len(labels))
-	for idx,label := range labels {
+	rtn := make([]Value, len(labels))
+	for idx, label := range labels {
 		rtn[idx] = label
 	}
 
@@ -260,9 +260,9 @@ func kmeansValue(data []Value,labels []Value,itr int) []Value {
 			groups[idx] = append(groups[idx], elm)
 		}
 
-		for i,label := range rtn {
+		for i, label := range rtn {
 			valSlice := groups[i]
-			ave,err := label.Average(valSlice)
+			ave, err := label.Average(valSlice)
 			if ave != nil && err == nil {
 				rtn[i] = ave
 			} else if err != nil {
@@ -284,10 +284,10 @@ func kmeansValue(data []Value,labels []Value,itr int) []Value {
 	return rtn
 }
 
-func closestIndex(val Value,labels []Value) int {
+func closestIndex(val Value, labels []Value) int {
 	rtn := -1
 	min := math.MaxFloat64
-	for idx,elm := range labels {
+	for idx, elm := range labels {
 		vd := val.Distance(elm)
 		if vd < min {
 			min = vd

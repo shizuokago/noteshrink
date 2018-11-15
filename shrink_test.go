@@ -6,7 +6,6 @@ import (
 	_ "image/png"
 	"os"
 	"testing"
-
 )
 
 func TestMain(m *testing.M) {
@@ -41,7 +40,7 @@ func TestBackground(t *testing.T) {
 		t.Errorf("CreateSample[%v]", err)
 	}
 
-	samples.output("sample/notesA1_samples.png",100,100)
+	samples.output("sample/notesA1_samples.png", 100, 100)
 
 	op.Shift = 4
 	bg, err := getBackgroundColor(samples, op)
