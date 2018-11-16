@@ -1,5 +1,5 @@
 /*
- Shrink を呼び出すと image.Image をnoteshrinkして image.Imageに変換してくれます。
+ Shrink() を呼び出すと image.Image をnoteshrinkして image.Imageに変換してくれます。
 
 
 */
@@ -8,8 +8,6 @@ package noteshrink
 import (
 	"fmt"
 	"image"
-	_ "image/jpeg"
-	_ "image/png"
 	"math"
 	"math/rand"
 	"time"
@@ -85,8 +83,10 @@ func Shrink(img image.Image, op *Option) (image.Image, error) {
 	return shrink.ToImage(cols, rows), nil
 }
 
+//色を適用
 func apply(data Pixels, bg *Pixel, labels Pixels, op *Option) (Pixels, error) {
 
+	//使用箇所を取得
 	flag, err := getForegraundMask(data, bg, op)
 	if err != nil {
 		return nil, err
@@ -96,6 +96,7 @@ func apply(data Pixels, bg *Pixel, labels Pixels, op *Option) (Pixels, error) {
 	for idx := 0; idx < len(data); idx++ {
 		newPix := bg
 		if flag[idx] {
+			//近いラベルを取得
 			wk := closest(data[idx], labels)
 			newPix = labels[wk]
 		}
@@ -104,18 +105,22 @@ func apply(data Pixels, bg *Pixel, labels Pixels, op *Option) (Pixels, error) {
 	return rtn, nil
 }
 
+//使用する色を検索
 func createPalette(p Pixels, op *Option) (*Pixel, Pixels, error) {
 
+	//背景色を取得
 	bg, err := getBackgroundColor(p, op)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	//使用箇所を特定
 	mask, err := getForegraundMask(p, bg, op)
 	if err != nil {
 		return bg, nil, err
 	}
 
+	//適用だけを残す
 	target := make([]*Pixel, 0, len(p))
 	for i, pix := range p {
 		if mask[i] {
@@ -123,6 +128,7 @@ func createPalette(p Pixels, op *Option) (*Pixel, Pixels, error) {
 		}
 	}
 
+	//色を決定
 	labels, err := kmeans(target, op)
 	if err != nil {
 		return bg, nil, err
@@ -131,17 +137,21 @@ func createPalette(p Pixels, op *Option) (*Pixel, Pixels, error) {
 	return bg, labels, nil
 }
 
+//背景色を取得
 func getBackgroundColor(p Pixels, op *Option) (*Pixel, error) {
 
+	//色を落とす
 	q, err := p.Quantize(op.Shift)
 	if err != nil {
 		return nil, err
 	}
+	//一番多い色を取得
 	col := q.Most()
 
 	return col, nil
 }
 
+//サンプルを抽出
 func createSample(p Pixels, num int) (Pixels, error) {
 
 	samples := make([]*Pixel, num)
@@ -149,10 +159,10 @@ func createSample(p Pixels, num int) (Pixels, error) {
 	for idx := 0; idx < num; idx++ {
 		samples[idx] = p[rand.Intn(leng)]
 	}
-
 	return samples, nil
 }
 
+//HSV空間からの距離により、使用箇所を特定
 func getForegraundMask(p Pixels, bg *Pixel, op *Option) ([]bool, error) {
 
 	rtn := make([]bool, len(p))
@@ -163,6 +173,7 @@ func getForegraundMask(p Pixels, bg *Pixel, op *Option) ([]bool, error) {
 	return rtn, nil
 }
 
+//kmeansで色を特定
 func kmeans(p Pixels, op *Option) ([]*Pixel, error) {
 
 	k := op.ForegroundNum - 1
@@ -217,8 +228,8 @@ func kmeans(p Pixels, op *Option) ([]*Pixel, error) {
 	return labels, nil
 }
 
+//近い位置を取得
 func closest(p *Pixel, labels []*Pixel) int {
-
 	idx := -1
 	d := math.MaxFloat64
 	for i := 0; i < len(labels); i++ {
@@ -231,6 +242,8 @@ func closest(p *Pixel, labels []*Pixel) int {
 	return idx
 }
 
+
+//一般化してみたやつ（未使用）
 type Value interface {
 	Distance(Value) float64
 	Average([]Value) (Value, error)
@@ -295,5 +308,4 @@ func closestIndex(val Value, labels []Value) int {
 		}
 	}
 	return rtn
-
 }

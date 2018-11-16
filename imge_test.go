@@ -2,28 +2,9 @@ package noteshrink
 
 import (
 	"testing"
-
 	"image/color"
 )
 
-func TestPack(t *testing.T) {
-
-	c := color.RGBA{R: 255, G: 128, B: 10, A: 255}
-	p := NewPixel(c)
-	packed := Pack(p)
-	ur, ug, ub := UnPack(packed)
-	if c.R != ur || c.G != ug || c.B != ub {
-		t.Errorf("Test Color:Pack [%v]!=[R:%d][G:%d][B:%d]", c, ur, ug, ub)
-	}
-
-	c = color.RGBA{R: 5, G: 5, B: 5, A: 255}
-	p = NewPixel(c)
-	packed = Pack(p)
-	ur, ug, ub = UnPack(packed)
-	if c.R != ur || c.G != ug || c.B != ub {
-		t.Errorf("Test Color:Pack [%v]!=[R:%d][G:%d][B:%d]", c, ur, ug, ub)
-	}
-}
 
 func TestRGB2HSV(t *testing.T) {
 	//Black
@@ -221,22 +202,6 @@ func BenchmarkImageAt(b *testing.B) {
 	}
 }
 
-func BenchmarkPack(b *testing.B) {
-	p := NewPixelRGB(10, 20, 30)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Pack(p)
-	}
-}
-
-func BenchmarkUnPack(b *testing.B) {
-	p := NewPixelRGB(10, 20, 30)
-	val := Pack(p)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		UnPack(val)
-	}
-}
 
 func BenchmarkConvertColor(b *testing.B) {
 	y, cb, cr := color.RGBToYCbCr(10, 20, 30)

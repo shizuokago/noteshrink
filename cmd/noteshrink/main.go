@@ -9,11 +9,10 @@ import (
 	"log"
 	"os"
 	"strings"
-
-	"github.com/shizuokago/noteshrink"
-
 	"runtime/pprof"
 	"sync"
+
+	"github.com/shizuokago/noteshrink"
 )
 
 var (
@@ -80,6 +79,7 @@ func main() {
 	return
 }
 
+//ファイル変換の実行
 func run(f string, opt *noteshrink.Option) error {
 
 	log.Printf("Shrink    : [%s]\n", f)
@@ -114,7 +114,7 @@ func run(f string, opt *noteshrink.Option) error {
 
 	//出力の切り替え
 	if *gifVal {
-		err = noteshrink.OutputGIF(output, shrink, opt.ForegroundNum)
+		err = noteshrink.OutputGIF(output, shrink)
 	} else {
 		err = noteshrink.OutputPNG(output, shrink)
 	}
@@ -126,6 +126,7 @@ func run(f string, opt *noteshrink.Option) error {
 	return err
 }
 
+//画像の読み込み
 func loadImage(f string) (image.Image, error) {
 	file, err := os.Open(f)
 	if err != nil {
@@ -146,6 +147,7 @@ type profile struct {
 	err  error
 }
 
+//負荷計測用のプロファイル作成
 func startProfile(f string) *profile {
 	log.Println("Profile Start:" + f)
 	rtn := profile{}
@@ -164,6 +166,7 @@ func startProfile(f string) *profile {
 	return &rtn
 }
 
+//プロファイルの終了
 func (p profile) stop() {
 	log.Println("Profile Stop")
 	if p.err == nil {

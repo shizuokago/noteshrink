@@ -18,6 +18,20 @@ type Pixel struct {
 	V float64
 }
 
+//PackはPixelデータをint化します
+func Pack(p *Pixel) int {
+	return int(p.R)<<16 | int(p.G)<<8 | int(p.B)
+}
+
+//元のRGBデータに直します
+func UnPack(v int) (uint8, uint8, uint8) {
+	r := uint8((v >> 16) & 0xFF)
+	g := uint8((v >> 8) & 0xFF)
+	b := uint8(v & 0xFF)
+	return r, g, b
+}
+
+//ColorからのPixel生成
 func NewPixel(c color.Color) *Pixel {
 	cc, err := convertColor(c)
 	if err != nil {
@@ -26,6 +40,7 @@ func NewPixel(c color.Color) *Pixel {
 	return NewPixelRGB(cc.R, cc.G, cc.B)
 }
 
+//RGBからのPixel生成
 func NewPixelRGB(r, g, b uint8) *Pixel {
 	p := &Pixel{}
 	p.R = r
@@ -35,15 +50,13 @@ func NewPixelRGB(r, g, b uint8) *Pixel {
 	return p
 }
 
+//HSVからのPixel生成
 func NewPixelHSV(h, s, v float64) *Pixel {
 	c := HSV2RGB(h, s, v)
 	return NewPixel(c)
 }
 
-func (p Pixel) RGB() (uint8, uint8, uint8) {
-	return p.R, p.G, p.B
-}
-
+//HSVの位置を取得
 func (p Pixel) DistanceHSV(src *Pixel) (float64, float64, float64) {
 	h := math.Abs(src.H - p.H)
 	s := math.Abs(src.S - p.S)
@@ -51,6 +64,7 @@ func (p Pixel) DistanceHSV(src *Pixel) (float64, float64, float64) {
 	return h, s, v
 }
 
+//RGB空間の距離
 func (own Pixel) DistanceRGB(src *Pixel) float64 {
 	all := 0.0
 	r := float64(src.R) - float64(own.R)
@@ -62,6 +76,7 @@ func (own Pixel) DistanceRGB(src *Pixel) float64 {
 	return all
 }
 
+//Shift変換
 func (p Pixel) Shift(shift uint) *Pixel {
 
 	r := uint8((p.R >> shift) << shift)
@@ -71,17 +86,19 @@ func (p Pixel) Shift(shift uint) *Pixel {
 	return NewPixelRGB(r, g, b)
 }
 
+//色生成
 func (p Pixel) Color() *color.RGBA {
 	return UIntRGBA(p.R, p.G, p.B)
 }
 
+//デバッグ用の文字列作成
 func (p Pixel) String() string {
 	rtn := fmt.Sprintf("R[%d]G[%d]B[%d] = H[%f]S[%f]V[%f]", p.R, p.G, p.B, p.H, p.S, p.V)
 	return rtn
 }
 
 type Pixels []*Pixel
-
+//一番多い色を取得
 func (p Pixels) Most() *Pixel {
 
 	counter := make(map[int]int)
@@ -102,6 +119,7 @@ func (p Pixels) Most() *Pixel {
 	return NewPixelRGB(UnPack(value))
 }
 
+//すべてのデータを丸めた色を返す
 func (p Pixels) Quantize(s int) (Pixels, error) {
 
 	if s >= 8 {
@@ -116,6 +134,7 @@ func (p Pixels) Quantize(s int) (Pixels, error) {
 	return quantize, nil
 }
 
+//平均の色を算出
 func (p Pixels) Average() (*Pixel, error) {
 
 	if p == nil {
@@ -128,7 +147,6 @@ func (p Pixels) Average() (*Pixel, error) {
 	}
 
 	r, g, b := 0.0, 0.0, 0.0
-
 	for _, d := range p {
 		r += float64(d.R)
 		g += float64(d.G)
@@ -144,6 +162,7 @@ func (p Pixels) Average() (*Pixel, error) {
 	return NewPixel(c), nil
 }
 
+//画像の作成
 func (p Pixels) ToImage(cols, rows int) image.Image {
 
 	idx := 0
@@ -158,12 +177,12 @@ func (p Pixels) ToImage(cols, rows int) image.Image {
 	return img
 }
 
+//ソート
 func (p Pixels) Sort() error {
 
 	sort.Slice(p, func(i, j int) bool {
 		pi := Pack(p[i])
 		pj := Pack(p[j])
-
 		iRGB := int((pi>>16)&0xFF) +
 			int((pi>>8)&0xFF) +
 			int(pi&0xFF)
@@ -174,6 +193,8 @@ func (p Pixels) Sort() error {
 	})
 	return nil
 }
+
+//デバッグ用にパレットを作成
 func (p Pixels) debug(f string) error {
 	leng := len(p)
 	if leng > 20 {
@@ -183,6 +204,7 @@ func (p Pixels) debug(f string) error {
 	return OutputPNG(f, img)
 }
 
+//出力
 func (p Pixels) output(f string, cols, rows int) error {
 	img := p.ToImage(cols, rows)
 	return OutputPNG(f, img)

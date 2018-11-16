@@ -3,14 +3,14 @@ package noteshrink
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"image/gif"
-	_ "image/jpeg"
 	"image/png"
+	"image/color"
 	"math"
 	"os"
 )
 
+//PNG の圧縮出力
 func OutputPNG(f string, img image.Image) error {
 	//出力ファイルの作成
 	out, err := os.Create(f)
@@ -25,7 +25,7 @@ func OutputPNG(f string, img image.Image) error {
 }
 
 var gifPalette color.Palette = nil
-
+//減色GIFのパレット作成
 func setGIFPalette(bg *Pixel, fore Pixels) {
 	gifPalette = make(color.Palette, len(fore)+1)
 	gifPalette[0] = bg.Color()
@@ -34,7 +34,8 @@ func setGIFPalette(bg *Pixel, fore Pixels) {
 	}
 }
 
-func OutputGIF(f string, img image.Image, num int) error {
+//減色したGIFパレットでの出力
+func OutputGIF(f string, img image.Image) error {
 
 	if gifPalette == nil {
 		return fmt.Errorf("palette is nil")
@@ -54,16 +55,17 @@ func OutputGIF(f string, img image.Image, num int) error {
 	return gif.Encode(out, img, op)
 }
 
+//減色GIFのQuantazer
 type gifQuantizer struct {
 	palette color.Palette
 }
-
+//Quantizerの生成
 func NewQuantizer(p color.Palette) *gifQuantizer {
 	q := gifQuantizer{}
 	q.palette = p
 	return &q
 }
-
+//Quantizer実装
 func (q gifQuantizer) Quantize(p color.Palette, img image.Image) color.Palette {
 	return q.palette
 }
@@ -89,20 +91,8 @@ func convertPixels(img image.Image) (Pixels, error) {
 	return rtn, nil
 }
 
-//PackはRGBデータをint化します
-func Pack(p *Pixel) int {
-	return int(p.R)<<16 | int(p.G)<<8 | int(p.B)
-}
 
-//元のRGBデータに直します
-func UnPack(v int) (uint8, uint8, uint8) {
-	r := uint8((v >> 16) & 0xFF)
-	g := uint8((v >> 8) & 0xFF)
-	b := uint8(v & 0xFF)
-	return r, g, b
-}
-
-//colorの変換です
+//colorのキャスト
 func convertColor(c color.Color) (*color.RGBA, error) {
 
 	switch c.(type) {
@@ -198,6 +188,7 @@ func HSV2RGB(h, s, v float64) *color.RGBA {
 	return FloatRGBA(r*255.0, g*255.0, b*255.0)
 }
 
+//FloatのRGB値からRGBAの作成
 func FloatRGBA(r, g, b float64) *color.RGBA {
 
 	ur := uint8(r)
@@ -215,6 +206,7 @@ func FloatRGBA(r, g, b float64) *color.RGBA {
 	return UIntRGBA(ur, ug, ub)
 }
 
+//RGBAの作成
 func UIntRGBA(r, g, b uint8) *color.RGBA {
 	return &color.RGBA{R: r, G: g, B: b, A: 255}
 }
