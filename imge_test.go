@@ -1,10 +1,9 @@
 package noteshrink
 
 import (
-	"testing"
 	"image/color"
+	"testing"
 )
-
 
 func TestRGB2HSV(t *testing.T) {
 	//Black
@@ -201,7 +200,6 @@ func BenchmarkImageAt(b *testing.B) {
 		img.At(1000, 1000)
 	}
 }
-
 
 func BenchmarkConvertColor(b *testing.B) {
 	y, cb, cr := color.RGBToYCbCr(10, 20, 30)

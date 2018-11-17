@@ -24,7 +24,7 @@ func teardown() {
 func TestBackground(t *testing.T) {
 
 	prefix := "sample/notesA1"
-	i := prefix + ".jpg"
+	i := prefix + ".png"
 
 	pix, err := loadPixels(i)
 	if err != nil {

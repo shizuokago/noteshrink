@@ -1,9 +1,9 @@
 package noteshrink
 
 import (
+	"image/color"
 	"math/rand"
 	"testing"
-	"image/color"
 )
 
 func TestPack(t *testing.T) {

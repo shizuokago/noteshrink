@@ -8,8 +8,8 @@ import (
 	_ "image/png"
 	"log"
 	"os"
-	"strings"
 	"runtime/pprof"
+	"strings"
 	"sync"
 
 	"github.com/shizuokago/noteshrink"
@@ -94,9 +94,6 @@ func run(f string, opt *noteshrink.Option) error {
 	shrink, err := noteshrink.Shrink(img, opt)
 	if err != nil {
 		return err
-	}
-	if shrink == nil {
-		return fmt.Errorf("shrink image is null.")
 	}
 
 	output := ""

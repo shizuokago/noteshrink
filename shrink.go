@@ -6,7 +6,6 @@
 package noteshrink
 
 import (
-	"fmt"
 	"image"
 	"math"
 	"math/rand"
@@ -69,9 +68,6 @@ func Shrink(img image.Image, op *Option) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	if shrink == nil {
-		return nil, fmt.Errorf("image is nil")
-	}
 
 	//GIF用にパレットを作成
 	setGIFPalette(bg, palette)
@@ -80,7 +76,7 @@ func Shrink(img image.Image, op *Option) (image.Image, error) {
 	cols := rect.Dx()
 	rows := rect.Dy()
 
-	return shrink.ToImage(cols, rows), nil
+	return shrink.ToImage(cols, rows)
 }
 
 //色を適用
@@ -241,7 +237,6 @@ func closest(p *Pixel, labels []*Pixel) int {
 	}
 	return idx
 }
-
 
 //一般化してみたやつ（未使用）
 type Value interface {

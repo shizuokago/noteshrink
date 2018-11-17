@@ -3,9 +3,9 @@ package noteshrink
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"image/gif"
 	"image/png"
-	"image/color"
 	"math"
 	"os"
 )
@@ -25,6 +25,7 @@ func OutputPNG(f string, img image.Image) error {
 }
 
 var gifPalette color.Palette = nil
+
 //減色GIFのパレット作成
 func setGIFPalette(bg *Pixel, fore Pixels) {
 	gifPalette = make(color.Palette, len(fore)+1)
@@ -59,12 +60,14 @@ func OutputGIF(f string, img image.Image) error {
 type gifQuantizer struct {
 	palette color.Palette
 }
+
 //Quantizerの生成
 func NewQuantizer(p color.Palette) *gifQuantizer {
 	q := gifQuantizer{}
 	q.palette = p
 	return &q
 }
+
 //Quantizer実装
 func (q gifQuantizer) Quantize(p color.Palette, img image.Image) color.Palette {
 	return q.palette
@@ -91,10 +94,8 @@ func convertPixels(img image.Image) (Pixels, error) {
 	return rtn, nil
 }
 
-
 //colorのキャスト
 func convertColor(c color.Color) (*color.RGBA, error) {
-
 	switch c.(type) {
 	case color.YCbCr:
 		o := c.(color.YCbCr)

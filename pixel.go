@@ -53,7 +53,7 @@ func NewPixelRGB(r, g, b uint8) *Pixel {
 //HSVからのPixel生成
 func NewPixelHSV(h, s, v float64) *Pixel {
 	c := HSV2RGB(h, s, v)
-	return NewPixel(c)
+	return NewPixelRGB(c.R, c.G, c.B)
 }
 
 //HSVの位置を取得
@@ -98,6 +98,7 @@ func (p Pixel) String() string {
 }
 
 type Pixels []*Pixel
+
 //一番多い色を取得
 func (p Pixels) Most() *Pixel {
 
@@ -163,7 +164,7 @@ func (p Pixels) Average() (*Pixel, error) {
 }
 
 //画像の作成
-func (p Pixels) ToImage(cols, rows int) image.Image {
+func (p Pixels) ToImage(cols, rows int) (image.Image,error) {
 
 	idx := 0
 	img := image.NewRGBA(image.Rect(0, 0, cols, rows))
@@ -174,7 +175,7 @@ func (p Pixels) ToImage(cols, rows int) image.Image {
 			idx++
 		}
 	}
-	return img
+	return img,nil
 }
 
 //ソート
@@ -200,12 +201,18 @@ func (p Pixels) debug(f string) error {
 	if leng > 20 {
 		return fmt.Errorf("NotSupported.")
 	}
-	img := p.ToImage(leng, 1)
+	img,err := p.ToImage(leng, 1)
+	if err != nil {
+		return err
+	}
 	return OutputPNG(f, img)
 }
 
 //出力
 func (p Pixels) output(f string, cols, rows int) error {
-	img := p.ToImage(cols, rows)
+	img,err := p.ToImage(cols, rows)
+	if err != nil {
+		return err
+	}
 	return OutputPNG(f, img)
 }
